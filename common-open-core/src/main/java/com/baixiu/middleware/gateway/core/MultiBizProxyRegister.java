@@ -1,17 +1,27 @@
 package com.baixiu.middleware.gateway.core;
 
 import com.baixiu.middleware.gateway.anno.RouterBaseScan;
+import com.baixiu.middleware.gateway.anno.SPIDefine;
+import com.baixiu.middleware.gateway.consts.CommonConsts;
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanClassLoaderAware;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionBuilder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.context.EnvironmentAware;
+import org.springframework.context.ResourceLoaderAware;
 import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
 import org.springframework.context.annotation.ImportBeanDefinitionRegistrar;
 import org.springframework.core.annotation.AnnotationAttributes;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.filter.AnnotationTypeFilter;
+import org.springframework.stereotype.Component;
 import org.springframework.util.ClassUtils;
 
 import java.lang.reflect.Proxy;
@@ -22,9 +32,16 @@ import java.util.*;
  * @author baixiu
  * @date 创建时间 2023/12/20 2:35 PM
  */
-public class MultiBizProxyRegister implements ImportBeanDefinitionRegistrar, BeanClassLoaderAware {
+@Component
+public class MultiBizProxyRegister implements ImportBeanDefinitionRegistrar, BeanClassLoaderAware, BeanFactoryAware, EnvironmentAware, ResourceLoaderAware {
 
+    private BeanFactory beanFactory;
+    
+    private Environment envirnoment;
+    
     private ClassLoader classLoader;
+    
+    private ResourceLoader resourceLoader;
 
     @Override
     public void registerBeanDefinitions(AnnotationMetadata annotationMetadata, BeanDefinitionRegistry registry) {
@@ -74,7 +91,7 @@ public class MultiBizProxyRegister implements ImportBeanDefinitionRegistrar, Bea
                     BeanDefinitionBuilder beanDefinitionBuilder=BeanDefinitionBuilder.genericBeanDefinition(spiProxyObject.getClass());
                     beanDefinitionBuilder.addConstructorArgValue (Proxy.getInvocationHandler(spiProxyObject));
                     AbstractBeanDefinition realBeanDefinition = beanDefinitionBuilder.getBeanDefinition();
-                    beanDefinition.setPrimary(true);
+                    realBeanDefinition.setPrimary(true);
 
                     //注册definition到spring容器
                     StringBuilder sb = new StringBuilder()
@@ -93,7 +110,29 @@ public class MultiBizProxyRegister implements ImportBeanDefinitionRegistrar, Bea
 
     private ClassPathScanningCandidateComponentProvider getScanner() {
         //不通过默认filter来实现scanner ，则后面需要增加filter
-        return new ClassPathScanningCandidateComponentProvider (false);
+        ClassPathScanningCandidateComponentProvider scanner = new ClassPathScanningCandidateComponentProvider (false, this.envirnoment) {
+            @Override
+            protected boolean isCandidateComponent(AnnotatedBeanDefinition annotatedBeanDefinition) {
+                //获取注解的元数据
+                // 1.判断是否是独立的注解 不依赖其他注解或者类
+                // 2.注解是否是一个接口
+                if (annotatedBeanDefinition.getMetadata ().isIndependent () && annotatedBeanDefinition.getMetadata ().isInterface ()) {
+                    //获取类 判断是否存在SPI defines
+                    try {
+                        Class<?> target = ClassUtils.forName(annotatedBeanDefinition.getMetadata ().getClassName (),
+                                MultiBizProxyRegister.this.classLoader);
+                        SPIDefine[] spiDefines = target.getAnnotationsByType (SPIDefine.class);
+                        return spiDefines.length > 0;
+                    } catch (ClassNotFoundException e) {
+                        throw new RuntimeException (e);
+                    }
+                }
+                return false;
+            }
+        };
+        scanner.setResourceLoader(this.resourceLoader);
+        scanner.addIncludeFilter(new AnnotationTypeFilter (SPIDefine.class));
+        return scanner;
     }
 
     /**
@@ -117,5 +156,20 @@ public class MultiBizProxyRegister implements ImportBeanDefinitionRegistrar, Bea
     @Override
     public void setBeanClassLoader(ClassLoader classLoader) {
         this.classLoader=classLoader;
+    }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        this.beanFactory=beanFactory;
+    }
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.envirnoment=environment;
+    }
+
+    @Override
+    public void setResourceLoader(ResourceLoader resourceLoader) {
+        this.resourceLoader=resourceLoader;
     }
 }

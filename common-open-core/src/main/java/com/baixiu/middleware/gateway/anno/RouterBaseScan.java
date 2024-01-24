@@ -15,12 +15,11 @@ import java.lang.annotation.*;
  * @author baixiu
  * @date 2023年12月19日
  */
+@Documented
 @Target (ElementType.TYPE)
 @Retention (RetentionPolicy.RUNTIME)
-@Documented
 @Import(value = MultiBizProxyRegister.class)
 public @interface RouterBaseScan {
-
-     String path = "";
-
+     String path() default "";
+     
 }

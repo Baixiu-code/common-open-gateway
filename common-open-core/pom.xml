@@ -18,6 +18,7 @@
         <junit.version>4.12</junit.version>
         <jmq.client.version>2.3.2.2</jmq.client.version>
         <lombok.version>1.18.24</lombok.version>
+        <ttl.version>2.12.2</ttl.version>
     </properties>
 
     <dependencies>
@@ -54,6 +55,12 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${spring-boot.version}</version>
+        </dependency>
+        <!-- ttl -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>transmittable-thread-local</artifactId>
+            <version>${ttl.version}</version>
         </dependency>
     </dependencies>
 

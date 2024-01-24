@@ -8,6 +8,7 @@
     <name>open-gateway-boot</name>
 
     <modelVersion>4.0.0</modelVersion>
+    <packaging>war</packaging>
 
     <properties>
         <java.version>1.8</java.version>
@@ -21,8 +22,28 @@
     </properties>
 
     <dependencies>
-
         <dependency>
+            <groupId>com.baixiu.middleware</groupId>
+            <artifactId>open-gateway-core</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.baixiu.middleware</groupId>
+            <artifactId>open-gateway-standard-api</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency> 
+        <dependency>
+            <groupId>com.baixiu.middleware</groupId>
+            <artifactId>open-gateway-standard-api-testa</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency> 
+        <dependency>
+            <groupId>com.baixiu.middleware</groupId>
+            <artifactId>open-gateway-standard-api-testb</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+        
+        <dependency>            
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
             <version>${spring-boot.version}</version>
@@ -57,7 +78,74 @@
         </dependency>
     </dependencies>
 
-
-
-
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-war-plugin</artifactId>
+                <version>3.3.2</version>
+                <configuration>
+                    <failOnMissingWebXml>false</failOnMissingWebXml>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-failsafe-plugin</artifactId>
+                <version>2.20</version>
+                <configuration>
+                    <includes>
+                        <include>**/*IT.java</include>
+                        <include>**/*ITTest.java</include>
+                        <include>**/*ITCase.java</include>
+                        <include>**/*IGTest.java</include>
+                    </includes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.20</version>
+                <configuration>
+                    <excludes>
+                        <exclude>**/*IT.java</exclude>
+                        <exclude>**/*ITTest.java</exclude>
+                        <exclude>**/*ITCase.java</exclude>
+                        <exclude>**/*IGTest.java</exclude>
+                    </excludes>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+                <version>1.4.5.RELEASE</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>1.5</version>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>addSources</goal>
+                            <goal>addTestSources</goal>
+                            <goal>generateStubs</goal>
+                            <goal>compile</goal>
+                            <goal>testGenerateStubs</goal>
+                            <goal>testCompile</goal>
+                            <goal>removeStubs</goal>
+                            <goal>removeTestStubs</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+    
 </project>
