@@ -17,8 +17,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 /**
  * 完成代理工厂
@@ -68,25 +70,27 @@ public class ExtensionBeanInterceptor implements ApplicationContextAware
         //step1:get invocation identity
         String identityStr=getIdentity(methodInvocation);
         //step2:push into thread local
-        ThreadLocalSPIRouter.pushIdentity(identityStr);
-        //step3:通过identity 获取router
-        List<String> routerName=this.spiRouter.route(methodInvocation);
-        //step4:通过SPIExtensionBeanContexts 获取 bean
-        Object routerObject=SPIExtensionBeanContexts.BEAN_EXTENDS_MAP.get(routerName);
-        if(Objects.nonNull(routerObject)){
-            //通过声明class强转object
-            Object realBean=methodInvocation.getMethod().getDeclaringClass().cast(routerObject);
-            Method method=realBean.getClass().getMethod(methodInvocation.getMethod().getName(),methodInvocation.getMethod()
-                    .getParameterTypes());
-            try {
-                return method.invoke(realBean,methodInvocation.getArguments());
-            } catch (Exception e) {
-                throw new RuntimeException (e);
-            } finally {
-                ThreadLocalSPIRouter.popIdentity();
+        //ThreadLocalSPIRouter.pushIdentity(identityStr);
+        //todo step3:通过identity 获取router.可以通过接口实现自定义router形式得到处理。这里出现问题了。先暂时搁置下，排查了两天没看到问题出在哪里。
+        //List<String> routerNames=this.spiRouter.route(methodInvocation);
+        for (String routerItem : identityStr.split (",")) {
+            //step4:通过SPIExtensionBeanContexts 获取 bean
+            Object routerObject=SPIExtensionBeanContexts.BEAN_EXTENDS_MAP.get(routerItem);
+            if(Objects.nonNull(routerObject)){
+                //通过声明class强转object
+                Object realBean=methodInvocation.getMethod().getDeclaringClass().cast(routerObject);
+                Method method=realBean.getClass().getMethod(methodInvocation.getMethod().getName(),methodInvocation.getMethod()
+                        .getParameterTypes());
+                try {
+                    //step5:动态代理反射调用。由于是多个调用，不能return 
+                    method.invoke(realBean,methodInvocation.getArguments());
+                } catch (Exception e) {
+                    throw new RuntimeException (e);
+                } finally {
+                    //ThreadLocalSPIRouter.popIdentity();
+                }
             }
-        }
-        //step5:动态代理反射调用
+        }        
         return null;
     }
 
@@ -94,15 +98,15 @@ public class ExtensionBeanInterceptor implements ApplicationContextAware
         try {
             Object[] objects=methodInvocation.getArguments();
             if(objects!=null && objects.length>0){
-                Field fields=objects[0].getClass().getDeclaredField(CommonConsts.DEFAULT_IDENTITY_FIELD_NAME);
-                fields.setAccessible (true);
-                String identityStr=fields.get(objects[0]).toString();
+                Field fields=objects[0].getClass().getDeclaredField(CommonConsts.DEFAULT_TARGET_FIELD_NAME);
+                fields.setAccessible(true);
+                List<String> identityStr= (List<String>) fields.get(objects[0]);
                 log.info("getIdentity.identityStr.{}",identityStr);
-                return identityStr;
+                return String.join (",",identityStr);
             }
-            return CommonConsts.DEFAULT_IDENTITY;
+            return null;
         } catch(Exception e) {
-            return CommonConsts.DEFAULT_IDENTITY;
+            return null;
         }
     }
 
@@ -138,8 +142,7 @@ public class ExtensionBeanInterceptor implements ApplicationContextAware
 
     /**
      * 获取服务接口
-     *
-     * @param serviceInterface
+     * @param serviceInterface serviceInterface
      */
     public void setServiceInterface(Class<?> serviceInterface) {
         Assert.notNull(serviceInterface, "'serviceInterface' must not be null");

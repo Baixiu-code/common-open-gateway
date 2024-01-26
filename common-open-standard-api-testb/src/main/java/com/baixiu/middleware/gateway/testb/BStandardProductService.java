@@ -10,10 +10,13 @@ import org.springframework.stereotype.Service;
  * @author chenfanglin1
  * @date 创建时间 2024/1/23 6:20 PM
  */
-@Extension(appName="clientA")
+@Extension(appName="clientB")
+@Service
 public class BStandardProductService implements StandardProductService {
+    
     @Override
     public void syncProduct(SyncRoutableRequest<EtcProductRequest> request) {
         System.out.println ("client b sync product success");
     }
+    
 }

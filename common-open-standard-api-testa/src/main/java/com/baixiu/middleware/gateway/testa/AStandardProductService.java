@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
  * @date 创建时间 2024/1/23 6:12 PM
  */
 @Extension(appName="clientA")
+@Service
 public class AStandardProductService implements StandardProductService {
     @Override
     public void syncProduct(SyncRoutableRequest<EtcProductRequest> request) {

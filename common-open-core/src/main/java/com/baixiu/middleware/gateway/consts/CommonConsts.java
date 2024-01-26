@@ -23,14 +23,14 @@ public final class CommonConsts {
     public static final String BASE_PACKAGES_STR = "basePackages";
 
     /**
-     * default identity
-     */
-    public static final String DEFAULT_IDENTITY = "DEFAULT_IDENTITY";
-
-    /**
      * 默认属性字段
      */
     public static final String DEFAULT_IDENTITY_FIELD_NAME="identityField";
+
+    /**
+     * multi biz router field name .
+     */
+    public static final String DEFAULT_TARGET_FIELD_NAME="targetSystems";
 
     /**
      *

@@ -7,7 +7,6 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
 import java.util.Map;
-import static com.baixiu.middleware.gateway.core.SPIExtensionBeanContexts.BEAN_EXTENDS_MAP;
 
 /**
  * 用以扫描 extension 注解的内容 
@@ -19,10 +18,11 @@ public class ExtensionScanHandler implements ApplicationContextAware {
     
     @Override
     public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-        Map<String,Object> extensionMaps=applicationContext.getBeansWithAnnotation (Extension.class);
+        Map<String,Object> extensionMaps=applicationContext.getBeansWithAnnotation(Extension.class);
         extensionMaps.forEach ((key,value)->{
             Extension extensionItem= AnnotationUtils.findAnnotation(value.getClass (),Extension.class);
-            String realKey=extensionItem.appName()+"_"+extensionItem.scenario();
+            //String realKey=extensionItem.appName()+"_"+extensionItem.scenario();
+            String realKey=extensionItem.appName();
             SPIExtensionBeanContexts.BEAN_EXTENDS_MAP.put(realKey,value);
         });
     }

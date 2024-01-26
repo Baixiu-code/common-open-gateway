@@ -29,7 +29,7 @@ public class BootTest {
     public void testMultiBizInvoke(){
         
         SyncRoutableRequest<EtcProductRequest> syncRoutableRequest=new SyncRoutableRequest<> ();
-        syncRoutableRequest.setTargetSystems (Arrays.asList ("testa","testb"));
+        syncRoutableRequest.setTargetSystems (Arrays.asList ("clientA","clientB"));
         
         EtcProductRequest request=new EtcProductRequest ();
         request.setProductId ("testA&B both invoke");
